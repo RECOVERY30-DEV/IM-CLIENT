@@ -168,6 +168,7 @@ function expiryTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '18:00'
   return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -185,6 +186,7 @@ function expiryLabel(value: string, demo: boolean) {
     date.getDate() === now.getDate()
   if (sameDay) return `오늘 ${expiryTime(value)}까지`
   return `${new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',

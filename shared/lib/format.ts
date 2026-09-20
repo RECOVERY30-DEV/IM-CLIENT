@@ -31,6 +31,7 @@ export function formatKoreanDate(value?: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '날짜 정보 없음'
   return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date)
