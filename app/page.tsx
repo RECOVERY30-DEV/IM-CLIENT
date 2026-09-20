@@ -1,4 +1,4 @@
-import { ConditionCheckFlow } from '@/components/condition-check-flow'
+import { SplashEntry } from '@/components/splash-entry'
 
 export default async function Home({
   searchParams,
@@ -6,5 +6,5 @@ export default async function Home({
   searchParams: Promise<{ applicationId?: string }>
 }) {
   const { applicationId } = await searchParams
-  return <ConditionCheckFlow screen="home" applicationId={applicationId} />
+  return <SplashEntry applicationId={applicationId} />
 }

@@ -24,6 +24,16 @@ export type PreCondition = {
   conditions: ConditionFields
 }
 
+export type SavePreConditionCommand = Pick<PreCondition, 'inquiredAt' | 'expiresAt' | 'conditions'>
+
+export type SavePreConditionResult = {
+  preSnapshotId: number
+  applicationId: string
+  expiresAt: string
+  payloadHash: string
+  conditions: ConditionFields
+}
+
 export type ComparisonItem = {
   itemId: number
   fieldCode: string
@@ -61,6 +71,7 @@ export type ComparisonRun = {
   applicationId: string
   status: JobStatus
   overallStatus?: OverallStatus
+  uncertainReason?: 'EXTRACTION_FAILED' | 'SOURCE_CONFLICT' | 'CALCULATION_UNAVAILABLE'
   progress: { percent: number; completedSteps: number; totalSteps: number }
 }
 

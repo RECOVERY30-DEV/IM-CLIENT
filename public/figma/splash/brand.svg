@@ -1,0 +1,22 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="100.078" height="57.1353" viewBox="0 0 100.078 57.1353" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2085671401">
+<rect id="Rectangle 1954129053" x="19.4559" y="1.1913" width="19.46" height="19.4559" rx="3.47426" transform="rotate(90 19.4559 1.1913)" fill="#17C8A1"/>
+<path id="Rectangle 1954129052" d="M25.7157 0.906635C50.6443 0.405914 71.3154 23.0229 71.8859 51.4231L71.8859 56.2306L54.1808 56.2306L54.1013 52.275C53.7558 35.071 41.2338 21.3703 26.1328 21.6737L25.7157 0.906635Z" fill="#17C8A1"/>
+<path id="Subtract" d="M100.078 24.3026C90.2832 24.4994 81.7958 29.8217 77.1225 37.6581C75.5088 30.8043 72.8092 24.3902 69.2221 18.6981C77.1296 11.0418 87.8378 6.23935 99.7103 6.00087L100.078 24.3026Z" fill="url(#paint0_linear_0_36)"/>
+<rect id="Rectangle 1954129054" x="19.4559" y="25.9999" width="30" height="19" rx="3.47426" transform="rotate(90 19.4559 25.9999)" fill="#17C8A1"/>
+<g id="Mask group">
+<mask id="mask0_0_36" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="1" width="20" height="21">
+<rect id="Rectangle 1954129055" x="19.4559" y="1.19148" width="20.1507" height="19.4559" rx="3.47426" transform="rotate(90 19.4559 1.19148)" fill="#17C8A1"/>
+</mask>
+<g mask="url(#mask0_0_36)">
+<path id="Union" d="M-0.972995 12.001C4.17542 11.8976 8.61686 14.7189 11.2975 18.9737C13.5208 16.8205 16.5313 15.4684 19.8698 15.4014L19.9723 20.5469C17.218 20.6024 14.8318 22.1005 13.5182 24.3047C13.8069 25.532 13.9734 26.8091 13.9997 28.1162L14.0641 31.3203L5.15493 31.5L5.09341 28.4346C5.01283 24.4296 2.1577 21.6862 -0.777683 21.7451L-2.72983 21.7842L-2.92612 12.0401L-0.972995 12.001ZM7.00259 27.6592C7.02525 27.9018 7.04155 28.1473 7.04654 28.3955L7.02798 27.9453C7.02179 27.8494 7.01146 27.7542 7.00259 27.6592Z" fill="#74DDE5"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_36" x1="77.1413" y1="6.4537" x2="78.1304" y2="55.6944" gradientUnits="userSpaceOnUse">
+<stop stop-color="#77DDFF"/>
+<stop offset="1" stop-color="#17C8A1"/>
+</linearGradient>
+</defs>
+</svg>

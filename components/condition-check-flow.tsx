@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react'
 
 import { demoItems, demoPreCondition, demoProof, demoSummary } from '@/shared/data/demo'
 import { requestImApi } from '@/shared/lib/api'
+import { comparisonCompletionPath } from '@/shared/lib/comparison-route'
 import { formatKoreanDate, formatSignedWon, formatWon, statusCopy } from '@/shared/lib/format'
+import { toSavePreConditionCommand } from '@/shared/lib/pre-condition-command'
 import type {
   ComparisonHeadline,
   ComparisonItem,
@@ -15,10 +17,11 @@ import type {
   PreCondition,
   ProofStatus,
   ReviewGate,
+  SavePreConditionResult,
   SignatureSession,
 } from '@/shared/types/im'
 
-type Screen = 'home' | 'progress' | 'summary' | 'item' | 'review' | 'proof' | 'expired'
+type Screen = 'home' | 'progress' | 'summary' | 'item' | 'review' | 'proof' | 'expired' | 'uncertain'
 
 const tone = {
   positive: 'bg-teal-50 text-teal-700',
@@ -143,6 +146,7 @@ export function ConditionCheckFlow({
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [savingPreCondition, setSavingPreCondition] = useState(false)
   const routeComparisonId = comparisonId ?? '101'
   const item =
     comparisonItem ?? demoItems.find((entry) => String(entry.itemId) === itemId) ?? demoItems[0]
@@ -161,11 +165,7 @@ export function ConditionCheckFlow({
     return () => window.clearInterval(id)
   }, [liveMode, screen])
   useEffect(() => {
-    if (screen !== 'home' || !liveMode) return
-    if (!applicationId) {
-      setLiveError('실서비스에서는 applicationId가 포함된 링크로 접근해 주세요.')
-      return
-    }
+    if (screen !== 'home' || !liveMode || !applicationId) return
     let cancelled = false
     void requestImApi<PreCondition>(`applications/${applicationId}/pre-conditions/latest`)
       .then((data) => {
@@ -180,7 +180,7 @@ export function ConditionCheckFlow({
     }
   }, [applicationId, liveMode, screen])
   useEffect(() => {
-    if (screen !== 'progress' || !liveMode) return
+    if ((screen !== 'progress' && screen !== 'uncertain') || !liveMode) return
     if (!comparisonId) {
       setLiveError('실서비스에서는 comparisonId가 포함된 링크로 접근해 주세요.')
       return
@@ -202,6 +202,12 @@ export function ConditionCheckFlow({
       window.clearInterval(poller)
     }
   }, [comparisonId, liveMode, screen])
+  useEffect(() => {
+    if (screen !== 'progress' || !liveMode || !comparisonRun || comparisonRun.status !== 'COMPLETED') {
+      return
+    }
+    window.location.assign(comparisonCompletionPath(comparisonRun.comparisonId, comparisonRun.overallStatus))
+  }, [comparisonRun, liveMode, screen])
   useEffect(() => {
     if (screen !== 'summary' || !liveMode || !comparisonId) return
     void requestImApi<ComparisonSummary>(`comparisons/${comparisonId}/summary`)
@@ -246,6 +252,42 @@ export function ConditionCheckFlow({
       setActionError(error instanceof Error ? error.message : '항목 확인을 저장하지 못했습니다.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function savePreCondition() {
+    if (!liveMode) {
+      window.location.assign(`/comparison/${routeComparisonId}`)
+      return
+    }
+    if (!applicationId) {
+      setActionError('대출 신청 정보가 없어 조건을 저장할 수 없습니다.')
+      return
+    }
+    if (preCondition.status === 'EXPIRED') {
+      window.location.assign('/expired')
+      return
+    }
+
+    setActionError(null)
+    setActionMessage(null)
+    setSavingPreCondition(true)
+    try {
+      const result = await requestImApi<SavePreConditionResult>(
+        `applications/${applicationId}/pre-conditions`,
+        {
+          method: 'POST',
+          headers: { 'Idempotency-Key': `${applicationId}:${preCondition.inquiredAt}` },
+          body: toSavePreConditionCommand(preCondition),
+        },
+      )
+      setActionMessage(
+        `조건을 저장했습니다. 다음 대출 신청 단계에서 최종 조건 비교가 자동으로 시작됩니다. (V1 #${result.preSnapshotId})`,
+      )
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : '조건을 저장하지 못했습니다.')
+    } finally {
+      setSavingPreCondition(false)
     }
   }
 
@@ -414,16 +456,37 @@ export function ConditionCheckFlow({
                   </div>
                 ))}
               </div>
+              {actionError && (
+                <div className="mt-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+                  {actionError}
+                </div>
+              )}
+              {actionMessage && (
+                <div className="mt-4 rounded-xl bg-teal-50 p-4 text-sm text-teal-800">
+                  {actionMessage}
+                </div>
+              )}
             </>
           )}
         </section>
         <Bottom>
-          <Link
-            href={`/comparison/${routeComparisonId}`}
-            className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
-          >
-            이 조건으로 신청
-          </Link>
+          {liveMode ? (
+            <button
+              type="button"
+              onClick={() => void savePreCondition()}
+              disabled={savingPreCondition || Boolean(liveError)}
+              className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white disabled:bg-slate-300"
+            >
+              {savingPreCondition ? '조건 저장 중…' : '이 조건으로 신청'}
+            </button>
+          ) : (
+            <Link
+              href={`/comparison/${routeComparisonId}`}
+              className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
+            >
+              이 조건으로 신청
+            </Link>
+          )}
         </Bottom>
       </Shell>
     )
@@ -493,12 +556,27 @@ export function ConditionCheckFlow({
           </div>
         </section>
         <Bottom>
-          <Link
-            href={`/comparison/${routeComparisonId}/summary`}
-            className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
-          >
-            비교 결과 확인
-          </Link>
+          {liveMode ? (
+            <button
+              type="button"
+              disabled={comparisonRun?.status !== 'COMPLETED'}
+              onClick={() =>
+                window.location.assign(
+                  comparisonCompletionPath(routeComparisonId, comparisonRun?.overallStatus),
+                )
+              }
+              className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white disabled:bg-slate-300"
+            >
+              비교 결과 확인
+            </button>
+          ) : (
+            <Link
+              href={comparisonCompletionPath(routeComparisonId, demoSummary.overallStatus)}
+              className="w-full rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
+            >
+              비교 결과 확인
+            </Link>
+          )}
         </Bottom>
       </Shell>
     )
@@ -768,6 +846,51 @@ export function ConditionCheckFlow({
             className="flex-1 rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
           >
             처음으로
+          </Link>
+        </Bottom>
+      </Shell>
+    )
+
+  if (screen === 'uncertain')
+    return (
+      <Shell title="iM 조건체크">
+        <section className="pt-12">
+          <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+            일부 조건 확인 필요
+          </span>
+          <h1 className="mt-4 text-2xl font-bold">일부 조건은 자동으로 확인하지 못했어요</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            계약 전 약정서 원문을 확인하거나 상담원과 함께 확인할 수 있습니다.
+          </p>
+          {comparisonRun?.uncertainReason && (
+            <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+              확인 사유: {comparisonRun.uncertainReason}
+            </div>
+          )}
+          {actionMessage && (
+            <div className="mt-4 rounded-xl bg-teal-50 p-4 text-sm text-teal-800">{actionMessage}</div>
+          )}
+          {actionError && (
+            <div className="mt-4 rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{actionError}</div>
+          )}
+        </section>
+        <Bottom
+          secondary={
+            <button
+              type="button"
+              onClick={() => void requestConsultation()}
+              disabled={submitting}
+              className="rounded-xl bg-slate-100 px-4 py-3.5 text-sm font-bold text-slate-600 disabled:opacity-50"
+            >
+              상담원 문의
+            </button>
+          }
+        >
+          <Link
+            href={`/comparison/${routeComparisonId}/summary`}
+            className="flex-1 rounded-xl bg-teal-500 py-3.5 text-center text-sm font-bold text-white"
+          >
+            비교 결과 보기
           </Link>
         </Bottom>
       </Shell>
