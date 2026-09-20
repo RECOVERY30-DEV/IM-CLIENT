@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ConditionCheckFlow } from '@/components/condition-check-flow'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 describe('ConditionCheckFlow Figma screen contract', () => {
   it('renders the V1 screen with the Figma heading, time badge, and action', () => {
@@ -11,6 +15,18 @@ describe('ConditionCheckFlow Figma screen contract', () => {
     expect(screen.getByText('오늘 18:00까지')).toBeInTheDocument()
     expect(screen.getByText('유효한 조회 결과입니다.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '이 조건으로 신청' })).toBeInTheDocument()
+  })
+
+  it('routes a live entry without an application ID to the comparison screen', () => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'false')
+
+    render(<ConditionCheckFlow screen="home" />)
+
+    expect(screen.getByRole('link', { name: '이 조건으로 신청' })).toHaveAttribute(
+      'href',
+      '/comparison/101',
+    )
+    expect(screen.queryByText('대출 신청 정보가 없어 조건을 저장할 수 없습니다.')).not.toBeInTheDocument()
   })
 
   it('renders the comparison progress copy and disabled checking action', () => {

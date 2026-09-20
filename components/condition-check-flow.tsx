@@ -636,7 +636,7 @@ export function ConditionCheckFlow({
           )}
         </section>
         <BottomAction>
-          {liveMode ? (
+          {liveMode && applicationId ? (
             <button
               type="button"
               onClick={() => void savePreCondition()}
