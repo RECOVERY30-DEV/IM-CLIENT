@@ -295,14 +295,17 @@ export function ConditionCheckFlow({
   applicationId,
   comparisonId,
   decisionId,
+  demoMode = false,
 }: {
   screen: Screen
   itemId?: string
   applicationId?: string
   comparisonId?: string
   decisionId?: string
+  demoMode?: boolean
 }) {
-  const liveMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'false'
+  const demoFlow = demoMode || (screen === 'home' && !applicationId)
+  const liveMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'false' && !demoFlow
   const [progress, setProgress] = useState(75)
   const [preCondition, setPreCondition] = useState<PreCondition>(demoPreCondition)
   const [liveError, setLiveError] = useState<string | null>(null)
@@ -327,6 +330,7 @@ export function ConditionCheckFlow({
       .filter((entry) => entry.requiresReview)
       .map((entry) => ({ itemId: entry.itemId, label: entry.label, reviewed: true }))
   const allReviewed = reviewGate?.allReviewed ?? true
+  const flowHref = (href: string) => (demoFlow ? `${href}?demo=1` : href)
 
   useEffect(() => {
     if (screen !== 'progress' || liveMode) return
@@ -433,7 +437,7 @@ export function ConditionCheckFlow({
 
   async function savePreCondition() {
     if (!liveMode) {
-      window.location.assign(`/comparison/${routeComparisonId}`)
+      window.location.assign(flowHref(`/comparison/${routeComparisonId}`))
       return
     }
     if (!applicationId) {
@@ -646,7 +650,10 @@ export function ConditionCheckFlow({
               {savingPreCondition ? '조건 저장 중…' : '이 조건으로 신청'}
             </button>
           ) : (
-            <Link href={`/comparison/${routeComparisonId}`} className={primaryActionClass}>
+            <Link
+              href={flowHref(`/comparison/${routeComparisonId}`)}
+              className={primaryActionClass}
+            >
               이 조건으로 신청
             </Link>
           )}
@@ -705,9 +712,11 @@ export function ConditionCheckFlow({
         <BottomAction>
           {finished ? (
             <Link
-              href={comparisonCompletionPath(
-                routeComparisonId,
-                comparisonRun?.overallStatus ?? demoSummary.overallStatus,
+              href={flowHref(
+                comparisonCompletionPath(
+                  routeComparisonId,
+                  comparisonRun?.overallStatus ?? demoSummary.overallStatus,
+                ),
               )}
               className={primaryActionClass}
             >
@@ -777,7 +786,9 @@ export function ConditionCheckFlow({
         </div>
         <BottomAction>
           <Link
-            href={`/comparison/${routeComparisonId}/items/${summary.headlineItems[0]?.itemId ?? 1}`}
+            href={flowHref(
+              `/comparison/${routeComparisonId}/items/${summary.headlineItems[0]?.itemId ?? 1}`,
+            )}
             className={primaryActionClass}
           >
             변경 내용 자세히 보기
@@ -850,7 +861,10 @@ export function ConditionCheckFlow({
           </div>
         </section>
         <BottomAction>
-          <Link href={`/comparison/${routeComparisonId}/review`} className={primaryActionClass}>
+          <Link
+            href={flowHref(`/comparison/${routeComparisonId}/review`)}
+            className={primaryActionClass}
+          >
             확인
           </Link>
         </BottomAction>
@@ -941,7 +955,7 @@ export function ConditionCheckFlow({
               {submitting ? '약정 처리 중…' : '현재 조건으로 약정하기'}
             </button>
           ) : (
-            <Link href="/decision/9001" className={primaryActionClass}>
+            <Link href={flowHref('/decision/9001')} className={primaryActionClass}>
               현재 조건으로 약정하기
             </Link>
           )}
@@ -1052,7 +1066,10 @@ export function ConditionCheckFlow({
             >
               상담원 문의
             </button>
-            <Link href={`/comparison/${routeComparisonId}/summary`} className={primaryActionClass}>
+            <Link
+              href={flowHref(`/comparison/${routeComparisonId}/summary`)}
+              className={primaryActionClass}
+            >
               비교 결과 보기
             </Link>
           </div>

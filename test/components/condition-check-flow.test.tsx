@@ -1,10 +1,12 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ConditionCheckFlow } from '@/components/condition-check-flow'
 
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe('ConditionCheckFlow Figma screen contract', () => {
@@ -17,16 +19,49 @@ describe('ConditionCheckFlow Figma screen contract', () => {
     expect(screen.getByRole('link', { name: '이 조건으로 신청' })).toBeInTheDocument()
   })
 
-  it('routes a live entry without an application ID to the comparison screen', () => {
+  it('marks a live entry without an application ID as a demo comparison flow', () => {
     vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'false')
 
     render(<ConditionCheckFlow screen="home" />)
 
     expect(screen.getByRole('link', { name: '이 조건으로 신청' })).toHaveAttribute(
       'href',
-      '/comparison/101',
+      '/comparison/101?demo=1',
     )
-    expect(screen.queryByText('대출 신청 정보가 없어 조건을 저장할 수 없습니다.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('대출 신청 정보가 없어 조건을 저장할 수 없습니다.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps an explicit demo comparison in the progress UI when production live mode is enabled', async () => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'false')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('존재하지 않는 비교 결과입니다')))
+
+    render(<ConditionCheckFlow screen="progress" comparisonId="101" demoMode />)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(screen.getByRole('heading', { name: '최종 조건을 비교하고 있어요' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: '정보를 불러오지 못했어요' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('preserves demo mode when moving from progress to the comparison result', () => {
+    vi.stubEnv('NEXT_PUBLIC_DEMO_MODE', 'false')
+    vi.useFakeTimers()
+
+    render(<ConditionCheckFlow screen="progress" comparisonId="101" demoMode />)
+    act(() => {
+      vi.advanceTimersByTime(3_000)
+    })
+
+    expect(screen.getByRole('link', { name: '비교 결과 확인' })).toHaveAttribute(
+      'href',
+      '/comparison/101/summary?demo=1',
+    )
   })
 
   it('renders the comparison progress copy and disabled checking action', () => {
