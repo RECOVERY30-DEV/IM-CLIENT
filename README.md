@@ -19,7 +19,7 @@ pnpm dev
 Copy `.env.example` to `.env.local` before using the backend.
 
 ```bash
-IM_API_BASE_URL=http://ec2-43-200-143-21.ap-northeast-2.compute.amazonaws.com:8090
+IM_API_BASE_URL=https://im.recovery-30.shop
 NEXT_PUBLIC_DEMO_MODE=true
 ```
 
